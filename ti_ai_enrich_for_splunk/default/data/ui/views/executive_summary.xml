@@ -1,0 +1,313 @@
+
+<dashboard version="2" theme="dark">
+    <label>Executive Threat Intelligence Summary</label>
+    <description>High-level overview of enriched IOCs and campaigns with daily trends</description>
+    <definition><![CDATA[
+{
+	"title": "Executive Threat Intelligence Summary",
+	"description": "High-level overview of enriched IOCs and campaigns with daily trends",
+	"inputs": {
+		"input_global_trp": {
+			"options": {
+				"defaultValue": "-30d@d,now",
+				"token": "global_time"
+			},
+			"title": "Global Time Range",
+			"type": "input.timerange"
+		}
+	},
+	"defaults": {
+		"dataSources": {
+			"ds.search": {
+				"options": {
+					"queryParameters": {
+						"earliest": "$global_time.earliest$",
+						"latest": "$global_time.latest$"
+					}
+				}
+			}
+		},
+		"visualizations": {
+			"global": {
+				"showProgressBar": true
+			}
+		}
+	},
+	"visualizations": {
+		"viz_campaign_table": {
+			"containerOptions": {
+				"visibility": {
+					"hideWhenNoData": true
+				}
+			},
+			"dataSources": {
+				"primary": "ds_campaigns_table"
+			},
+			"title": "Active Campaigns",
+			"type": "splunk.table"
+		},
+		"viz_campaigns": {
+			"dataSources": {
+				"primary": "ds_campaigns"
+			},
+			"options": {
+				"showTrendIndicator": true,
+				"trendDisplayMode": "absolute"
+			},
+			"title": "Active Campaigns (Today vs Yesterday)",
+			"type": "splunk.singlevalue"
+		},
+		"viz_country_bar": {
+			"dataSources": {
+				"primary": "ds_countries"
+			},
+			"title": "Top 10 Countries of Origin",
+			"type": "splunk.bar",
+			"options": {
+				"dataValuesDisplay": "all"
+			}
+		},
+		"viz_critical_iocs": {
+			"dataSources": {
+				"primary": "ds_critical_iocs"
+			},
+			"options": {
+				"showTrendIndicator": true,
+				"trendDisplayMode": "absolute"
+			},
+			"title": "Critical Risk IOCs (Today vs Yesterday)",
+			"type": "splunk.singlevalue"
+		},
+		"viz_ioc_table": {
+			"containerOptions": {
+				"visibility": {
+					"hideWhenNoData": true
+				}
+			},
+			"dataSources": {
+				"primary": "ds_ioc_table"
+			},
+			"title": "Recent Critical IOCs (Executive Summaries)",
+			"type": "splunk.table"
+		},
+		"viz_risk_pie": {
+			"dataSources": {
+				"primary": "ds_risk_dist"
+			},
+			"title": "IOC Risk Distribution",
+			"type": "splunk.pie",
+			"options": {
+				"showDonutHole": true
+			}
+		},
+		"viz_timechart": {
+			"dataSources": {
+				"primary": "ds_timechart"
+			},
+			"title": "IOC Volume Over Time",
+			"type": "splunk.line",
+			"options": {
+				"dataValuesDisplay": "all"
+			}
+		},
+		"viz_total_iocs": {
+			"dataSources": {
+				"primary": "ds_total_iocs"
+			},
+			"options": {
+				"showTrendIndicator": true,
+				"trendDisplayMode": "absolute"
+			},
+			"title": "Total IOCs (Today vs Yesterday)",
+			"type": "splunk.singlevalue"
+		}
+	},
+	"dataSources": {
+		"ds_NgR32kKL": {
+			"name": "Search_1",
+			"options": {
+				"query": "index=ti_enrich type=\"ip\"\n | where _time >= $global_time.earliest$ AND _time <= $global_time.latest$| iplocation value\n| table value Country | stats count by Country| geom geo_countries allFeatures=True featureIdField=Country"
+			},
+			"type": "ds.search"
+		},
+		"ds_campaigns": {
+			"name": "active_campaign",
+			"options": {
+				"query": "| inputlookup ioc_cache |eval _time=last_seen| bin _time span=1d | stats count as campaigns by _time | tail 2"
+			},
+			"type": "ds.search"
+		},
+		"ds_campaigns_table": {
+			"name": "active_campaigns",
+			"options": {
+				"query": "| inputlookup campaign_cache  | eval last_updated_epoch=strptime(last_updated, \"%Y-%m-%dT%H:%M:%S\")| where last_updated >= relative_time(now(), \"$global_time.earliest$\") AND last_updated<=$global_time.latest$()| convert ctime(last_updated)| table last_updated  campaign_summary | sort -last_updated"
+			},
+			"type": "ds.search"
+		},
+		"ds_countries": {
+			"name": "top10",
+			"options": {
+				"query": "| inputlookup ioc_cache | eval last_updated_epoch=strptime(last_seen, \"%Y-%m-%dT%H:%M:%S\")| where last_seen>= relative_time(now(), \"$global_time.earliest$\") AND last_seen<=$global_time.latest$()| stats count by country | sort -count | head 10"
+			},
+			"type": "ds.search"
+		},
+		"ds_critical_iocs": {
+			"name": "critical_risk",
+			"options": {
+				"query": "| inputlookup ioc_cache |eval _time=last_seen| where risk_level=\"critical\" | bin _time span=1d | stats count as critical by _time | tail 2"
+			},
+			"type": "ds.search"
+		},
+		"ds_ioc_table": {
+			"name": "summary",
+			"options": {
+				"query": "| inputlookup ioc_cache| eval last_updated_epoch=strptime(last_seen, \"%Y-%m-%dT%H:%M:%S\")| where last_seen>= relative_time(now(), \"$global_time.earliest$\") AND last_seen<=$global_time.latest$()|eval _time=last_seen | where risk_level=\"critical\" | sort -last_seen | head 20 | table _time value country   ioc_summary"
+			},
+			"type": "ds.search"
+		},
+		"ds_risk_dist": {
+			"name": "ioc_risk",
+			"options": {
+				"query": "| inputlookup ioc_cache | eval last_updated_epoch=strptime(last_seen, \"%Y-%m-%dT%H:%M:%S\")| where last_seen>= relative_time(now(), \"$global_time.earliest$\") AND last_seen<=$global_time.latest$()| stats count by risk_level"
+			},
+			"type": "ds.search"
+		},
+		"ds_tGDPkyvD": {
+			"name": "Search_2",
+			"options": {
+				"query": "index=ti_enrich | where _time >= $global_time.earliest$ AND _time <= $global_time.latest$ type=\"ip\"\n | iplocation value\n| table value Country | stats count by Country| geom geo_countries allFeatures=True featureIdField=Country"
+			},
+			"type": "ds.search"
+		},
+		"ds_tags": {
+			"options": {
+				"query": "| inputlookup ioc_cache | mvexpand tags | stats count by tags | sort -count | head 10"
+			},
+			"type": "ds.search"
+		},
+		"ds_timechart": {
+			"name": "ioc_volume",
+			"options": {
+				"query": "| inputlookup ioc_cache| eval last_updated_epoch=strptime(last_seen, \"%Y-%m-%dT%H:%M:%S\")| where last_seen>= relative_time(now(), \"$global_time.earliest$\") AND last_seen<=$global_time.latest$() |eval _time=last_seen| timechart span=1d count"
+			},
+			"type": "ds.search"
+		},
+		"ds_total_iocs": {
+			"name": "total_ioc",
+			"options": {
+				"query": "| inputlookup ioc_cache |eval _time=last_seen | bin _time span=1d | stats dc(value) as total by _time | tail 2"
+			},
+			"type": "ds.search"
+		}
+	},
+	"layout": {
+		"globalInputs": [
+			"input_global_trp"
+		],
+		"layoutDefinitions": {
+			"layout_1": {
+				"options": {
+					"height": 1800,
+					"width": 1440
+				},
+				"structure": [
+					{
+						"item": "viz_total_iocs",
+						"position": {
+							"h": 120,
+							"w": 480,
+							"x": 0,
+							"y": 0
+						},
+						"type": "block"
+					},
+					{
+						"item": "viz_risk_pie",
+						"position": {
+							"h": 357,
+							"w": 480,
+							"x": 0,
+							"y": 120
+						},
+						"type": "block"
+					},
+					{
+						"item": "viz_campaign_table",
+						"position": {
+							"h": 300,
+							"w": 720,
+							"x": 0,
+							"y": 477
+						},
+						"type": "block"
+					},
+					{
+						"item": "viz_critical_iocs",
+						"position": {
+							"h": 120,
+							"w": 480,
+							"x": 480,
+							"y": 0
+						},
+						"type": "block"
+					},
+					{
+						"item": "viz_country_bar",
+						"position": {
+							"h": 357,
+							"w": 479,
+							"x": 480,
+							"y": 120
+						},
+						"type": "block"
+					},
+					{
+						"item": "viz_ioc_table",
+						"position": {
+							"h": 300,
+							"w": 720,
+							"x": 720,
+							"y": 477
+						},
+						"type": "block"
+					},
+					{
+						"item": "viz_timechart",
+						"position": {
+							"h": 357,
+							"w": 481,
+							"x": 959,
+							"y": 120
+						},
+						"type": "block"
+					},
+					{
+						"item": "viz_campaigns",
+						"position": {
+							"h": 120,
+							"w": 480,
+							"x": 960,
+							"y": 0
+						},
+						"type": "block"
+					}
+				],
+				"type": "grid"
+			}
+		},
+		"options": {
+			"submitButton": true,
+			"submitOnDashboardLoad": true
+		},
+		"tabs": {
+			"items": [
+				{
+					"label": "Executive Summary",
+					"layoutId": "layout_1"
+				}
+			]
+		}
+	}
+}
+    ]]></definition>
+</dashboard>

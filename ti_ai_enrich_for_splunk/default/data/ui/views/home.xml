@@ -1,0 +1,103 @@
+<dashboard version="1.1" theme="dark">
+  <label>TI Enrichment Overview</label>
+  <row>
+    <panel>
+      <title>IOC Risk Level Breakdown</title>
+      <chart>
+        <search>
+          <query>index=ti_enrich | stats count BY risk_level</query>
+        </search>
+        <option name="charting.chart">pie</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Top Countries by High/Critical IOCs</title>
+      <chart>
+        <search>
+          <query>
+            index=ti_enrich risk_level IN ("high","critical") type="ip"
+            | iplocation value
+            | stats count BY Country
+            | sort - count
+            | head 10
+          </query>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.chart.showDataLabels">all</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>IOC Risk Score Over Time</title>
+      <chart>
+        <search>
+          <query>index=ti_enrich | timechart avg(risk_score) BY risk_level</query>
+        </search>
+        <option name="charting.chart">line</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Top 10 High-Risk IOCs</title>
+      <table>
+        <search>
+          <query>index=ti_enrich risk_score&gt;=60 | stats values(type) AS type, max(risk_score) AS score BY value | sort - score | head 10</query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Recent Critical/High IOCs</title>
+      <table>
+        <search>
+          <query>index=ti_enrich risk_level="critical" OR risk_level="high" | table _time type value risk_score tags ioc_summary | sort - _time</query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Global Threat Map</title>
+      <map>
+        <search>
+          <query>index=ti_enrich type="ip"
+| iplocation value
+| table value Country | stats count by Country| geom geo_countries allFeatures=True featureIdField=Country</query>
+          <earliest>0</earliest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="mapping.choroplethLayer.colorBins">5</option>
+        <option name="mapping.choroplethLayer.colorMode">categorical</option>
+        <option name="mapping.choroplethLayer.maximumColor">0xd41f1f</option>
+        <option name="mapping.choroplethLayer.minimumColor">0x118832</option>
+        <option name="mapping.choroplethLayer.neutralPoint">0</option>
+        <option name="mapping.choroplethLayer.shapeOpacity">0.9</option>
+        <option name="mapping.choroplethLayer.showBorder">1</option>
+        <option name="mapping.data.maxClusters">100</option>
+        <option name="mapping.legend.placement">bottomright</option>
+        <option name="mapping.map.center">(21.29,14.24)</option>
+        <option name="mapping.map.panning">1</option>
+        <option name="mapping.map.scrollZoom">0</option>
+        <option name="mapping.map.zoom">2</option>
+        <option name="mapping.markerLayer.markerMaxSize">80</option>
+        <option name="mapping.markerLayer.markerMinSize">20</option>
+        <option name="mapping.markerLayer.markerOpacity">0.8</option>
+        <option name="mapping.showTiles">1</option>
+        <option name="mapping.tileLayer.maxZoom">19</option>
+        <option name="mapping.tileLayer.minZoom">0</option>
+        <option name="mapping.tileLayer.tileOpacity">1</option>
+        <option name="mapping.tileLayer.url">http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png</option>
+        <option name="mapping.type">choropleth</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+      </map>
+    </panel>
+  </row>
+</dashboard>

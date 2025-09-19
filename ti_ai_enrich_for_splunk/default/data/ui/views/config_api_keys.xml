@@ -1,0 +1,140 @@
+<form version="1.2" theme="dark">
+  <label>Threat Intel API Key Configuration</label>
+  <description>Enter or update your API keys for enrichment lookups. 
+    Leave a field blank to keep the existing value. 
+    All blank will clear stored keys.</description>
+  <fieldset submitButton="true">
+    <input type="text" token="otx_api_key">
+      <label>OTX API Key</label>
+      <default></default>
+    </input>
+    <input type="text" token="abuseipdb_api_key">
+      <label>AbuseIPDB API Key</label>
+      <default></default>
+    </input>
+    <input type="text" token="greynoise_api_key">
+      <label>GreyNoise API Key</label>
+      <default></default>
+    </input>
+    <input type="text" token="urlhaus_api_key">
+      <label>URLhaus API Key</label>
+      <default></default>
+    </input>
+  </fieldset>
+  <row>
+    <panel depends="$form.otx_api_key$,$form.abuseipdb_api_key$,$form.greynoise_api_key$,$form.urlhaus_api_key$">
+      <title>Save Status</title>
+      <table>
+        <search>
+          <query>
+            | inputlookup ti_api_keys
+            | eval otx_in="$otx_api_key$", abuseipdb_in="$abuseipdb_api_key$", greynoise_in="$greynoise_api_key$", urlhaus_in="$urlhaus_api_key$"
+            | eval all_empty = if(len(trim(otx_in))=0 AND len(trim(abuseipdb_in))=0 AND len(trim(greynoise_in))=0 AND len(trim(urlhaus_in))=0, 1, 0)
+            | eval _key="api_keys"
+            | eval otx_api_key=if(len(trim(otx_in))&gt;0, otx_in, if(all_empty=1, null(), otx_api_key))
+            | eval abuseipdb_api_key=if(len(trim(abuseipdb_in))&gt;0, abuseipdb_in, if(all_empty=1, null(), abuseipdb_api_key))
+            | eval greynoise_api_key=if(len(trim(greynoise_in))&gt;0, greynoise_in, if(all_empty=1, null(), greynoise_api_key))
+            | eval urlhaus_api_key=if(len(trim(urlhaus_in))&gt;0, urlhaus_in, if(all_empty=1, null(), urlhaus_api_key))
+            | fields _key otx_api_key abuseipdb_api_key greynoise_api_key urlhaus_api_key
+            | outputlookup ti_api_keys
+            | eval status=if(all_empty=1, "All keys cleared", "Keys saved successfully")
+            | table status
+          </query>
+          <earliest>-1s</earliest>
+          <latest>now</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Current Stored API Keys</title>
+      <table>
+        <search>
+          <query>
+            | inputlookup ti_api_keys
+            | eval otx_api_key=if(len(otx_api_key)&gt;4, "****" . substr(otx_api_key, -4), otx_api_key)
+            | eval abuseipdb_api_key=if(len(abuseipdb_api_key)&gt;4, "****" . substr(abuseipdb_api_key, -4), abuseipdb_api_key)
+            | eval greynoise_api_key=if(len(greynoise_api_key)&gt;4, "****" . substr(greynoise_api_key, -4), greynoise_api_key)
+            | eval urlhaus_api_key=if(len(urlhaus_api_key)&gt;4, "****" . substr(urlhaus_api_key, -4), urlhaus_api_key)
+            | table otx_api_key, abuseipdb_api_key, greynoise_api_key, urlhaus_api_key
+          </query>
+          <earliest>-1s</earliest>
+          <latest>now</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>API Key Creation Links</title>
+      <html>
+        <p>You can create or manage your API keys at the following provider pages:</p>
+        <ul>
+          <li>
+            <a href="https://www.abuseipdb.com/pricing" target="_blank">AbuseIPDB</a>
+          </li>
+          <li>
+            <a href="https://otx.alienvault.com/" target="_blank">OTX AlienVault</a>
+          </li>
+          <li>
+            <a href="https://viz.greynoise.io/auth-required" target="_blank">GreyNoise</a>
+          </li>
+          <li>
+            <a href="https://auth.abuse.ch/" target="_blank">URLhaus</a>
+          </li>
+        </ul>
+      </html>
+    </panel>
+  </row>
+  <row>
+  <panel>
+    <html>
+      <style>
+        .author-card {
+          background:#1e1e1e;
+          border:1px solid #333;
+          border-radius:8px;
+          padding:8px 16px;
+          box-shadow:0 1px 4px rgba(0,0,0,0.6);
+          font-family:'Segoe UI',sans-serif;
+          text-align:center;
+          max-width:280px;
+          transition: all 0.3s ease;
+        }
+        .author-card .tagline {
+          font-size:11px;
+          color:#aaa;
+          margin-bottom:3px;
+        }
+        .author-card .name {
+          font-size:15px;
+          font-weight:bold;
+          background:linear-gradient(90deg,#00B294,#00A4EF);
+          -webkit-background-clip:text;
+          -webkit-text-fill-color:transparent;
+          transition: text-shadow 0.3s ease;
+        }
+        .author-card .subtitle {
+          font-size:10px;
+          color:#777;
+          margin-top:4px;
+        }
+        .author-card:hover .name {
+          text-shadow:0 0 6px #00B294, 0 0 12px #00A4EF;
+        }
+      </style>
+
+      <div style="display:flex; justify-content:center; margin-top:30px; margin-bottom:10px;">
+        <div class="author-card">
+          <div class="tagline">
+            Crafted with <span style="color:#e63946;">❤</span> by
+          </div>
+          <div class="name">Prewin Thomas</div>
+          <div class="subtitle">Threat Intel Enrichment App</div>
+        </div>
+      </div>
+    </html>
+  </panel>
+</row>
+</form>

@@ -1,0 +1,2 @@
+actor,asns,countries,tags,tlds,confidence
+FIN7,AS9009;AS20473,UA;RU;NL,malware_c2;pos_malware;phishing_host,.com;.net,high

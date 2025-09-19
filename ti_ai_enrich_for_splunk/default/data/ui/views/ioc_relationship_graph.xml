@@ -1,0 +1,191 @@
+
+<dashboard version="2" theme="dark">
+    <label>IOC Graph &amp; Campaign Summaries</label>
+    <description>Interactive IOC Relationship Graph with drilldown to filter campaign summaries.</description>
+    <definition><![CDATA[
+{
+	"title": "IOC Graph & Campaign Summaries",
+	"description": "Interactive IOC Relationship Graph with drilldown to filter campaign summaries.",
+	"inputs": {
+		"input_global_time": {
+			"options": {
+				"defaultValue": "-24h@h,now",
+				"token": "global_time"
+			},
+			"title": "Global Time Range",
+			"type": "input.timerange"
+		}
+	},
+	"defaults": {
+		"dataSources": {
+			"ds.search": {
+				"options": {
+					"queryParameters": {
+						"earliest": "$global_time.earliest$",
+						"latest": "$global_time.latest$"
+					}
+				}
+			}
+		}
+	},
+	"visualizations": {
+		"viz_campaign_table": {
+			"dataSources": {
+				"primary": "ds_campaigns"
+			},
+			"options": {
+				"columns": [
+					{
+						"field": "_key",
+						"label": "Campaign ID"
+					},
+					{
+						"field": "root_domain",
+						"label": "Root Domain"
+					},
+					{
+						"field": "ioc_count",
+						"label": "IOC Count"
+					},
+					{
+						"field": "asn_count",
+						"label": "ASN Count"
+					},
+					{
+						"field": "country_count",
+						"label": "Country Count"
+					},
+					{
+						"field": "campaign_summary",
+						"label": "Campaign Summary"
+					}
+				],
+				"rowNumbers": true,
+				"wrap": true
+			},
+			"title": "Campaign Summaries on Source",
+			"type": "splunk.table"
+		},
+		"viz_network_graph": {
+			"dataSources": {
+				"primary": "ds_edges"
+			},
+			"eventHandlers": [
+				{
+					"options": {
+						"tokens": [
+							{
+								"key": "value",
+								"token": "iocs"
+							}
+						]
+					},
+					"type": "drilldown.setToken"
+				}
+			],
+			"options": {
+				"colorField": "relationship",
+				"labelField": "target",
+				"showLegend": true,
+				"sourceField": "source",
+				"targetField": "target"
+			},
+			"title": "IOC Relationship Graph",
+			"type": "splunk.linkgraph"
+		},
+		"viz_bb6oPe8w": {
+			"type": "splunk.table",
+			"options": {},
+			"dataSources": {
+				"primary": "ds_JKrioV47"
+			}
+		}
+	},
+	"dataSources": {
+		"ds_campaigns": {
+			"name": "Campaign Cache Lookup",
+			"options": {
+				"query": "| inputlookup campaign_cache | eval last_updated_epoch=strptime(last_updated, \"%Y-%m-%dT%H:%M:%S\")| where last_updated >= relative_time(now(), \"$global_time.earliest$\") AND last_updated<=$global_time.latest$()| search iocs=\"$iocs$\" | table  iocs tags risk_levels  campaign_summary",
+				"queryParameters": {
+					"earliest": "-24h@h",
+					"latest": "now"
+				}
+			},
+			"type": "ds.search"
+		},
+		"ds_edges": {
+			"name": "Edges Lookup",
+			"options": {
+				"query": "| inputlookup edges | eval last_updated_epoch=strptime(last_seen, \"%Y-%m-%dT%H:%M:%S\")| where last_seen>= relative_time(now(), \"$global_time.earliest$\") AND last_seen<=$global_time.latest$() \r\n| search rel IN (\"ioc_to_asn\",\"ioc_to_country\",\"ioc_to_tag\",\"ioc_to_domain\",\"ioc_to_url\") evidence.source = enrichment\r\n| eval weight=coalesce(weight,1)\r\n| rename src as source, dst as target\r\n| table source target rel weight",
+				"queryParameters": {
+					"earliest": "-24h@h",
+					"latest": "now"
+				}
+			},
+			"type": "ds.search"
+		},
+		"ds_JKrioV47": {
+			"type": "ds.search",
+			"options": {
+				"query": "| inputlookup ioc_cache| eval last_updated_epoch=strptime(last_seen, \"%Y-%m-%dT%H:%M:%S\")| where last_seen>= relative_time(now(), \"$global_time.earliest$\") AND last_seen<=$global_time.latest$()|eval _time=last_seen | search value=$iocs$| sort -last_seen | head 20 | table _time value country   ioc_summary sources.otx.malware_families \n|  rename _time as Time country as Country value as IOC ioc_summary as IOC_Summary sources.otx.malware_families as Malware_Family"
+			},
+			"name": "ioc_summary"
+		}
+	},
+	"layout": {
+		"globalInputs": [
+			"input_global_time"
+		],
+		"layoutDefinitions": {
+			"layout_1": {
+				"structure": [
+					{
+						"item": "viz_network_graph",
+						"position": {
+							"h": 500,
+							"w": 800,
+							"x": 0,
+							"y": 0
+						},
+						"type": "block"
+					},
+					{
+						"item": "viz_campaign_table",
+						"position": {
+							"h": 400,
+							"w": 1200,
+							"x": 0,
+							"y": 500
+						},
+						"type": "block"
+					},
+					{
+						"item": "viz_bb6oPe8w",
+						"type": "block",
+						"position": {
+							"x": 0,
+							"y": 900,
+							"w": 1200,
+							"h": 400
+						}
+					}
+				],
+				"type": "grid"
+			}
+		},
+		"options": {
+			"submitButton": true,
+			"submitOnDashboardLoad": true
+		},
+		"tabs": {
+			"items": [
+				{
+					"label": "IOC Graph",
+					"layoutId": "layout_1"
+				}
+			]
+		}
+	}
+}
+    ]]></definition>
+</dashboard>

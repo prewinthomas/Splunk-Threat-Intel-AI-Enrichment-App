@@ -1,0 +1,59 @@
+<form version="1.1" theme="dark">
+  <label>IOC Enrichment Lookup</label>
+  <description>Enter an IOC (IP, domain, or URL) to enrich it using the | enrichioc command.</description>
+  <!-- Subtle warning banner -->
+  <!-- Enrichment results -->
+  <!-- Latest IOC details from ioc_cache -->
+  <fieldset submitButton="true">
+    <input type="text" token="ioc_value">
+      <label>IOC Value</label>
+      <default></default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <html>
+        <div style="background:#2a2a2a; color:#d4b23f; padding:6px 10px; border-radius:4px;                     font-family:'Segoe UI',sans-serif; font-size:12px; margin-bottom:8px;">
+          ⚠ Enrichment lookups may take some time. Please wait while results are retrieved.
+        </div>
+      </html>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Enriched IOC Results</title>
+      <table>
+        <search>
+          <query>
+            | enrichioc value="$ioc_value$"
+          </query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="wrap">true</option>
+        <option name="count">20</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Latest IOC Details (from ioc_cache)</title>
+      <table>
+        <search>
+          <query>| inputlookup ioc_cache
+            
+            
+            | eval first_seen=strftime(first_seen,"%Y-%m-%d %H:%M:%S")
+            | eval last_seen=strftime(last_seen,"%Y-%m-%d %H:%M:%S")
+            | table ioc_summary value type risk_score risk_level country asn tags first_seen last_seen | sort -last_seen| head 10</query>
+          <earliest>-7d@d</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+</form>

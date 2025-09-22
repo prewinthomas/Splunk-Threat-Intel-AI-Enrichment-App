@@ -30,7 +30,7 @@ URLHaus
 📝 Detailed Logging – all enrichment activity is logged to:$SPLUNK_HOME/var/log/splunk/enrichioc.log
 
 
-📋 Prerequisites
+**📋 Prerequisites**
 Before installing, ensure the following:
 
 Splunk Enterprise 9.2+ or Splunk Cloud
@@ -45,7 +45,7 @@ Admin role for installation and setup
 
 Outbound HTTPS access to enrichment APIs
 
-Index Creation: The app expects an index named ti_enrich for storing enrichment results. You can create it by adding the following stanza to indexes.conf (on the same server or on your indexer):
+**Index Creation:** The app expects an index named ti_enrich for storing enrichment results. You can create it by adding the following stanza to indexes.conf (on the same server or on your indexer):
 
 [ti_enrich]
 homePath   = $SPLUNK_DB/ti_enrich/db
@@ -56,13 +56,13 @@ frozenTimePeriodInSecs = 7776000   # 90 days retention
 Uncomment and copy this stanza to your local folder if creating locally or configure it on your indexer(s) if running in a distributed environment
 
 
-⚙️ Installation
+**⚙️ Installation**
 Install the App
 Package as .spl and install via Manage Apps → Install app from file
 
 Restart Splunk if prompted
 
-Configure API Keys
+**Configure API Keys**
 
 Use the Threat Intel API Key Configuration dashboard
 Enter API keys for OTX, AbuseIPDB, GreyNoise, URLHaus
@@ -75,12 +75,12 @@ edges
 nodes
 campaign_cache
 
-🔎 Usage
+**🔎 Usage**
 Enrich IOCs
 | enrichioc value="8.8.8.8"
 
 
-📊 Dashboards
+**📊 Dashboards**
 1. Executive Threat Intelligence Summary
 High‑level overview for SOC managers and executives: IOC volumes, risk distribution, top countries, active campaigns, and recent critical IOCs.
 
@@ -96,7 +96,7 @@ Quick lookup for a single IOC using | enrichioc. Displays live enrichment result
 5. Threat Intel API Key Configuration
 Admin dashboard: manage API keys for OTX, AbuseIPDB, GreyNoise, and URLHaus. Keys are masked and stored in ti_api_keys.
 
-🧪 Testing
+**🧪 Testing**
 Run enrichment on known IOCs or any malicious IOCs
 
 Check logs at:
@@ -106,9 +106,19 @@ Verify KV Store entries in ioc_cache and campaign_cache
 
 Open dashboards to confirm data populates
 
-Troubleshooting
+**Troubleshooting**
 
 Check logs at:$SPLUNK_HOME/var/log/splunk/enrichioc.log 
 Enrich repeated IOCs directly from API instead of cache use below refresh=true
 Eg:
 | enrichioc value="8.8.8.8" refresh=true
+
+**IOC Enrichment Usage**
+* you can populate IOC enrichment for users through,
+* SPL Search Command - | enrichioc value="8.8.8.8"
+* Lookup‑Based Enrichment
+* Dashboards
+* Scheduled Searches & Alerts - Create scheduled searches that run iocenrich against feeds or logs.
+* Correlation Searches (ES / ITSI) - If you’re running Splunk Enterprise Security, you can wrap iocenrich into correlation searches.
+* KV Store Lookups - Analysts can query KV stores (ioc_cache, campaign_cache) directly, fast lookups without re‑enrichment.
+* Integration with SOAR

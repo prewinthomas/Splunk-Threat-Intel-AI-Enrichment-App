@@ -109,6 +109,8 @@ Open dashboards to confirm data populates
 **Troubleshooting**
 
 Check logs at:$SPLUNK_HOME/var/log/splunk/enrichioc.log 
+
+**Forced Enrichment**
 Enrich repeated IOCs directly from API instead of cache use below refresh=true
 Eg:
 | enrichioc value="8.8.8.8" refresh=true

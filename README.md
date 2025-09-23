@@ -112,8 +112,7 @@ Check logs at:$SPLUNK_HOME/var/log/splunk/enrichioc.log
 
 **Forced Enrichment**
 Enrich repeated IOCs directly from API instead of cache use below refresh=true
-Eg:
-| enrichioc value="8.8.8.8" refresh=true
+Eg: | enrichioc value="8.8.8.8" refresh=true
 
 **IOC Enrichment Usage**
 * you can populate IOC enrichment for users through,

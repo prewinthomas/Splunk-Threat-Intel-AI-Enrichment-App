@@ -117,9 +117,9 @@ Eg: | enrichioc value="8.8.8.8" refresh=true
 **IOC Enrichment Usage**
 * you can populate IOC enrichment for users through,
 * SPL Search Command - | enrichioc value="8.8.8.8"
-* Lookup‑Based Enrichment
+* Lookup‑Based Enrichments
 * Dashboards
 * Scheduled Searches & Alerts - Create scheduled searches that run iocenrich against feeds or logs.
 * Correlation Searches (ES / ITSI) - If you’re running Splunk Enterprise Security, you can wrap iocenrich into correlation searches.
 * KV Store Lookups - Analysts can query KV stores (ioc_cache, campaign_cache) directly, fast lookups without re‑enrichment.
-* Integration with SOAR
+* Integration with SOAR 
